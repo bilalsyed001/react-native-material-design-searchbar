@@ -1,4 +1,5 @@
-import React, { PropTypes } from 'react';
+import React from 'react';
+import PropTypes from 'prop-types'
 import {
   TextInput,
   StyleSheet,
@@ -43,8 +44,10 @@ export default class SearchBar extends React.Component {
     placeholderColor: PropTypes.string,
     iconColor: PropTypes.string,
     textStyle: PropTypes.object,
-    inputProps: PropTypes.object
-  }
+    inputProps: PropTypes.object,
+    onBackPress: PropTypes.func,
+    alwaysShowBackButton: PropTypes.bool,
+  };
 
   static defaultProps = {
     onSearchChange: () => {},
@@ -57,10 +60,11 @@ export default class SearchBar extends React.Component {
     placeholder: "Search...",
     returnKeyType: "search",
     padding: 5,
-    placeholderColor: "#bdbdbd",
-    iconColor: "#737373",
-    textStyle: {}
-  }
+    placeholderColor: '#bdbdbd',
+    iconColor: '#737373',
+    textStyle: {},
+    alwaysShowBackButton: false,
+  };
 
   constructor(props) {
     super(props);
@@ -99,6 +103,20 @@ export default class SearchBar extends React.Component {
     dismissKeyboard()
   }
 
+  _backPressed() {
+    dismissKeyboard()
+    if(this.props.onBackPress) {
+      this.props.onBackPress()
+    }
+  }
+
+  setText(text, focus) {
+    this._textInput.setNativeProps({ text: text });
+    if (focus) {
+      this._onFocus();
+    }
+  }
+
   render() {
     const {
       height,
@@ -116,9 +134,10 @@ export default class SearchBar extends React.Component {
       textStyle
     } = this.props;
 
-    let { iconSize } = this.props
+    let { iconSize, iconPadding } = this.props
 
     iconSize = typeof iconSize !== 'undefined' ? iconSize : height * 0.5
+    iconPadding = typeof iconPadding !== 'undefined' ? iconPadding : height * 0.25
 
     return (
       <View
@@ -130,25 +149,26 @@ export default class SearchBar extends React.Component {
             [
               styles.searchBar,
               {
-                height: height + 10,
-                paddingLeft: height * 0.25,
+                height: height,
+                paddingLeft: iconPadding
               },
               inputStyle
             ]
           }
         >
-          {this.state.isOnFocus ?
-            <TouchableOpacity onPress={this._dismissKeyboard}>
-              <Icon
-                name={iconBackName} size={height * 0.5}
+          {this.state.isOnFocus || this.props.alwaysShowBackButton
+            ? <TouchableOpacity onPress={this._backPressed.bind(this)}>
+                <Icon
+                  name={iconBackName}
+                  size={height * 0.5}
+                  color={iconColor}
+                />
+              </TouchableOpacity>
+            : <Icon
+                name={iconSearchName}
+                size={height * 0.5}
                 color={iconColor}
               />
-            </TouchableOpacity>
-          :
-            <Icon
-              name={iconSearchName} size={height * 0.5}
-              color={iconColor}
-            />
           }
           <TextInput
             autoCorrect={autoCorrect === true}
@@ -165,7 +185,7 @@ export default class SearchBar extends React.Component {
             style={
               [styles.searchBarInput,
                 {
-                  paddingLeft: height * 0.5,
+                  paddingLeft: iconPadding,
                   fontSize: height * 0.4,
                 },
                 textStyle
@@ -176,7 +196,7 @@ export default class SearchBar extends React.Component {
           {this.state.isOnFocus ?
             <TouchableOpacity onPress={this._onClose}>
               <Icon
-                style={{paddingRight: height * 0.5 }}
+                style={{paddingRight: iconPadding }}
                 name={iconCloseName} size={iconSize}
                 color={iconColor}
               />
